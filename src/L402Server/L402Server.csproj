@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>L402Server</RootNamespace>
+    <AssemblyName>L402Server</AssemblyName>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>L402Server</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Refined Element</Authors>
+    <Company>Refined Element</Company>
+    <Description>L402 server SDK for .NET — mint Lightning invoices and macaroons, verify L402 tokens. Thin wrapper around Lightning Enable's hosted producer API.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://docs.lightningenable.com/products/l402-microtransactions/native-integration</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/refined-element/le-server-l402-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>lightning;l402;bitcoin;http;payments;macaroon;agent;ai;monetization</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Generate XML doc for IntelliSense in consumers -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="L402Server.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+</Project>
