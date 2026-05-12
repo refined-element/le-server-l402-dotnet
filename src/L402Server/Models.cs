@@ -11,18 +11,18 @@ public sealed class L402ServerOptions
     /// Your Lightning Enable merchant API key. Required.
     /// Generate one at https://api.lightningenable.com/dashboard/settings.
     /// </summary>
-    public required string ApiKey { get; init; }
+    public string ApiKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Base URL for the L402 producer API. Defaults to the hosted Lightning Enable
     /// instance. Override for testing against a local dev instance.
     /// </summary>
-    public string BaseUrl { get; init; } = "https://api.lightningenable.com";
+    public string BaseUrl { get; set; } = "https://api.lightningenable.com";
 
     /// <summary>
     /// Per-request timeout. Defaults to 10 seconds.
     /// </summary>
-    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
 }
 
 /// <summary>

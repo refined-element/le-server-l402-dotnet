@@ -9,7 +9,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>L402Server</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Refined Element</Authors>
     <Company>Refined Element</Company>
     <Description>L402 server SDK for .NET — mint Lightning invoices and macaroons, verify L402 tokens. Thin wrapper around Lightning Enable's hosted producer API.</Description>

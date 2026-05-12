@@ -33,8 +33,15 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configure);
 
         // Bind options once at registration so the singleton sees them.
-        var options = new L402ServerOptions { ApiKey = "PLACEHOLDER" };
+        var options = new L402ServerOptions();
         configure(options);
+        if (string.IsNullOrWhiteSpace(options.ApiKey))
+        {
+            throw new InvalidOperationException(
+                "L402ServerOptions.ApiKey is required. Set opts.ApiKey inside the " +
+                "AddL402Server(...) callback. Generate a key at " +
+                "https://api.lightningenable.com/dashboard/settings.");
+        }
 
         services.AddHttpClient("L402Server", http =>
         {
