@@ -82,6 +82,15 @@ public sealed class L402ServerClient : IDisposable
                 "L402ServerOptions.ApiKey is required. Get one from your Lightning Enable dashboard.",
                 nameof(options));
         }
+        if (System.Text.RegularExpressions.Regex.IsMatch(options.ApiKey.Trim(), @"^\$\{[^}]+\}$"))
+        {
+            throw new ArgumentException(
+                $"L402ServerOptions.ApiKey looks like an unresolved environment-variable placeholder ({options.ApiKey.Trim()}). " +
+                "This usually means a parent shell exported the literal string \"${VAR_NAME}\" instead of the substituted value. " +
+                "Common sources: launchSettings.json with unrendered ${env:NAME}, a Dockerfile ENV line, or an unresolved IConfiguration value. " +
+                "Fix by setting LIGHTNING_ENABLE_API_KEY to the real key or by clearing the placeholder so configuration reads the correct value.",
+                nameof(options));
+        }
 
         _baseUrl = options.BaseUrl.TrimEnd('/');
 
