@@ -35,21 +35,15 @@ public static class ServiceCollectionExtensions
         // Bind options once at registration so the singleton sees them.
         var options = new L402ServerOptions();
         configure(options);
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            throw new InvalidOperationException(
-                "L402ServerOptions.ApiKey is required. Set opts.ApiKey inside the " +
-                "AddL402Server(...) callback. Generate a key at " +
-                "https://api.lightningenable.com/dashboard/settings.");
-        }
-        if (System.Text.RegularExpressions.Regex.IsMatch(options.ApiKey.Trim(), @"^\$\{[^}]+\}$"))
-        {
-            throw new InvalidOperationException(
-                $"L402ServerOptions.ApiKey looks like an unresolved environment-variable placeholder ({options.ApiKey.Trim()}). " +
-                "This usually means a parent shell exported the literal string \"${VAR_NAME}\" instead of the substituted value. " +
-                "Common sources: launchSettings.json with unrendered ${env:NAME}, a Dockerfile ENV line, or an unresolved IConfiguration value. " +
-                "Fix by setting LIGHTNING_ENABLE_API_KEY to the real key or by clearing the placeholder so configuration reads the correct value.");
-        }
+        // Centralized validation in ApiKeyValidator — same rules as
+        // the L402ServerClient constructor. Throws
+        // InvalidOperationException here because DI registration
+        // failures bubble up at startup, not at user-facing API
+        // construction. Trimmed value is written back so downstream
+        // code that reads options.ApiKey gets the cleaned form.
+        options.ApiKey = ApiKeyValidator.ValidateAndTrim(
+            options.ApiKey,
+            msg => new InvalidOperationException(msg));
 
         services.AddHttpClient("L402Server", http =>
         {

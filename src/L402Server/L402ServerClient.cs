@@ -76,21 +76,17 @@ public sealed class L402ServerClient : IDisposable
     public L402ServerClient(L402ServerOptions options, HttpClient? http)
     {
         ArgumentNullException.ThrowIfNull(options);
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            throw new ArgumentException(
-                "L402ServerOptions.ApiKey is required. Get one from your Lightning Enable dashboard.",
-                nameof(options));
-        }
-        if (System.Text.RegularExpressions.Regex.IsMatch(options.ApiKey.Trim(), @"^\$\{[^}]+\}$"))
-        {
-            throw new ArgumentException(
-                $"L402ServerOptions.ApiKey looks like an unresolved environment-variable placeholder ({options.ApiKey.Trim()}). " +
-                "This usually means a parent shell exported the literal string \"${VAR_NAME}\" instead of the substituted value. " +
-                "Common sources: launchSettings.json with unrendered ${env:NAME}, a Dockerfile ENV line, or an unresolved IConfiguration value. " +
-                "Fix by setting LIGHTNING_ENABLE_API_KEY to the real key or by clearing the placeholder so configuration reads the correct value.",
-                nameof(options));
-        }
+        // Validation extracted to ApiKeyValidator so the rules match
+        // exactly between client construction and DI registration.
+        // Exception parameter name is the field that's actually wrong
+        // ("ApiKey"), not the enclosing options object — makes the
+        // resulting ArgumentException point at the real problem.
+        // The returned trimmed value is then used for the outbound
+        // X-API-Key header so a stray leading/trailing space in
+        // configuration doesn't get sent on the wire.
+        var trimmedApiKey = ApiKeyValidator.ValidateAndTrim(
+            options.ApiKey,
+            msg => new ArgumentException(msg, paramName: "ApiKey"));
 
         _baseUrl = options.BaseUrl.TrimEnd('/');
 
@@ -113,7 +109,7 @@ public sealed class L402ServerClient : IDisposable
         }
 
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        _http.DefaultRequestHeaders.Add("X-API-Key", options.ApiKey);
+        _http.DefaultRequestHeaders.Add("X-API-Key", trimmedApiKey);
     }
 
     /// <summary>
