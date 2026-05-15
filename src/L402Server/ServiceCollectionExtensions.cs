@@ -35,13 +35,15 @@ public static class ServiceCollectionExtensions
         // Bind options once at registration so the singleton sees them.
         var options = new L402ServerOptions();
         configure(options);
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            throw new InvalidOperationException(
-                "L402ServerOptions.ApiKey is required. Set opts.ApiKey inside the " +
-                "AddL402Server(...) callback. Generate a key at " +
-                "https://api.lightningenable.com/dashboard/settings.");
-        }
+        // Centralized validation in ApiKeyValidator — same rules as
+        // the L402ServerClient constructor. Throws
+        // InvalidOperationException here because DI registration
+        // failures bubble up at startup, not at user-facing API
+        // construction. Trimmed value is written back so downstream
+        // code that reads options.ApiKey gets the cleaned form.
+        options.ApiKey = ApiKeyValidator.ValidateAndTrim(
+            options.ApiKey,
+            msg => new InvalidOperationException(msg));
 
         services.AddHttpClient("L402Server", http =>
         {

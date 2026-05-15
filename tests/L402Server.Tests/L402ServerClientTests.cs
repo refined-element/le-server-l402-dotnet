@@ -33,6 +33,35 @@ public class L402ServerClientTests
         act.Should().Throw<ArgumentException>().WithMessage("*ApiKey*");
     }
 
+    /// <summary>
+    /// Regression: a parent shell can export the literal string "${VAR_NAME}"
+    /// (from an unrendered settings.json or launchSettings) and the SDK would
+    /// happily POST that as the X-API-Key header, getting back an opaque 401
+    /// from the producer API. Catch it at construction with a self-diagnosing
+    /// error.
+    /// </summary>
+    [Theory]
+    [InlineData("${LIGHTNING_ENABLE_API_KEY}")]
+    [InlineData("${SOME_OTHER_VAR}")]
+    [InlineData("  ${PADDED_VAR}  ")]
+    public void Constructor_PlaceholderApiKey_Throws(string placeholder)
+    {
+        Action act = () => new L402ServerClient(new L402ServerOptions { ApiKey = placeholder });
+        act.Should().Throw<ArgumentException>().WithMessage("*unresolved environment-variable placeholder*");
+    }
+
+    [Theory]
+    [InlineData("abc$def")]
+    [InlineData("abc{def}")]
+    [InlineData("${incomplete")]
+    [InlineData("normalkey")]
+    public void Constructor_KeyWithDollarOrBraces_DoesNotThrow_WhenNotFullPlaceholderShape(string apiKey)
+    {
+        // Don't false-positive on real keys that happen to contain $ or }.
+        Action act = () => new L402ServerClient(new L402ServerOptions { ApiKey = apiKey });
+        act.Should().NotThrow();
+    }
+
     [Fact]
     public async Task Constructor_BaseUrlTrailingSlashIsStripped()
     {
