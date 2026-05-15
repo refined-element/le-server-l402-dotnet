@@ -51,32 +51,48 @@ public class ServiceCollectionExtensionsTests
         Action act = () => services.AddL402Server(opts =>
             opts.ApiKey = "${SECRET_LOOKING_VALUE}");
 
-        try
-        {
-            act();
-            Assert.Fail("Expected InvalidOperationException");
-        }
-        catch (InvalidOperationException ex)
-        {
-            ex.Message.Should().NotContain("SECRET_LOOKING_VALUE",
-                because: "the offending value must never appear in the exception message");
-        }
+        act.Should()
+           .Throw<InvalidOperationException>()
+           .Which.Message.Should().NotContain("SECRET_LOOKING_VALUE",
+               because: "the offending value must never appear in the exception message");
     }
 
     [Fact]
-    public void AddL402Server_ValidApiKey_Registers_And_TrimsApiKey()
+    public async Task AddL402Server_ValidApiKey_Registers_And_SendsTrimmedKey()
     {
+        // Proves trimming is actually applied to the outbound header,
+        // not just that DI registration succeeded. The earlier version
+        // of this test only resolved the client without observing the
+        // value it actually uses — which would have happily passed even
+        // if trim semantics regressed.
+        //
+        // Approach: register the service, override the named HttpClient
+        // ("L402Server") with a stub handler, resolve the client, make
+        // a real CreateChallenge call, and inspect the X-API-Key header
+        // that went out. If trimming worked, the header has no spaces.
         var services = new ServiceCollection();
-        services.AddL402Server(opts => opts.ApiKey = "  validkey  ");
-        // Build the provider and resolve the client — exercises the full
-        // DI path end-to-end. The client construction would also throw if
-        // validation failed there.
+        services.AddL402Server(opts =>
+        {
+            opts.ApiKey = "  validkey  ";
+            opts.BaseUrl = "https://api.example";
+        });
+
+        // Replace the HttpClient backing the named "L402Server" client
+        // with one that uses our stub handler. The DI registration uses
+        // IHttpClientFactory.CreateClient("L402Server"), so we configure
+        // that named client's handler explicitly.
+        var stub = new StubHttpHandler(StubHttpHandler.Json(
+            System.Net.HttpStatusCode.OK,
+            """{"invoice":"i","macaroon":"m","paymentHash":"p","expiresAt":"2026-05-12T00:00:00Z","resource":"/x","priceSats":1}"""));
+        services.AddHttpClient("L402Server").ConfigurePrimaryHttpMessageHandler(() => stub);
+
         using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<L402ServerClient>();
-        client.Should().NotBeNull();
-        // No public accessor for the bound ApiKey, but the fact that
-        // GetRequiredService succeeded means both validation passes
-        // (the registration-time one and the client-construction one)
-        // accepted the trimmed value.
+        await client.CreateChallengeAsync(new CreateChallengeRequest { Resource = "/x", PriceSats = 1 });
+
+        stub.LastRequest.Should().NotBeNull();
+        var apiKeyHeader = stub.LastRequest!.Headers.GetValues("X-API-Key").Single();
+        apiKeyHeader.Should().Be("validkey",
+            because: "the configured ApiKey had whitespace padding; the SDK must trim it before sending the header");
     }
 }
