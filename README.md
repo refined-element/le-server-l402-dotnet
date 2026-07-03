@@ -71,7 +71,7 @@ builder.Services.AddL402Server(opts =>
 });
 ```
 
-Then inject `L402ServerClient` into your controllers / services. (For drop-in ASP.NET Core middleware that handles 402 issuance + verification automatically, see the forthcoming `L402Server.AspNetCore` package.)
+Then inject `L402ServerClient` into your controllers / services. (For drop-in ASP.NET Core middleware that handles 402 issuance + verification automatically, see the [`L402Server.AspNetCore`](https://www.nuget.org/packages/L402Server.AspNetCore) package.)
 
 ## Surface
 
@@ -91,9 +91,11 @@ Response: `Invoice`, `Macaroon`, `PaymentHash`, `ExpiresAt`, `Resource`, `PriceS
 
 ### `VerifyTokenAsync` → `Task<VerificationResult>`
 
-Request fields: `Macaroon?` (required for L402, omit only for MPP), `Preimage` (required, hex).
+Request fields: `Macaroon?` (required for L402, omit only for MPP), `Preimage` (required, hex), `Resource?` (optional: enforce the macaroon's path caveat server-side), `AmountSats?` (optional: enforce the amount_sats caveat server-side, ≥ 1).
 
 Response: `Valid`, `Error?`, `Resource?`, `MerchantId?`, `AmountSats?`, `PaymentHash?`. Inspect `result.Valid` — the producer API returns 200 OK for both valid and invalid tokens.
+
+Set `Resource` (typically the incoming request path) and/or `AmountSats` (your endpoint's price) to have Lightning Enable enforce the macaroon's `path` and `amount_sats` caveats during verification — a token bound to a different resource or price tier comes back `Valid = false`. When left null, the caveat values are still returned on the result but **not** enforced; the comparison is then your responsibility.
 
 ### Exceptions
 
@@ -113,10 +115,10 @@ Lightning Enable supports two integration shapes:
 - **Proxy mode** — point Lightning Enable at your API URL; we forward authenticated requests on your behalf. Best for public APIs or quick experiments. [Setup walkthrough](https://docs.lightningenable.com/products/l402-microtransactions/proxy-setup-walkthrough).
 - **Native mode** — install this SDK in your existing API. Lightning Enable handles payment; your API handles everything else. Best for commercial APIs with their own auth, observability, or sensitive infrastructure. **This SDK is the Native mode building block.**
 
-Framework-specific middleware that wraps this SDK is in development:
+Framework-specific middleware that wraps the server SDKs is available today:
 
-- `L402Server.AspNetCore` — ASP.NET Core middleware (in development)
-- `l402-express` — Express middleware ([npm](https://www.npmjs.com/package/l402-express))
+- [`L402Server.AspNetCore`](https://www.nuget.org/packages/L402Server.AspNetCore) — ASP.NET Core middleware (wraps this SDK)
+- [`l402-express`](https://www.npmjs.com/package/l402-express) — Express middleware (wraps the [`l402-server`](https://www.npmjs.com/package/l402-server) Node SDK)
 
 ## Architectural notes
 

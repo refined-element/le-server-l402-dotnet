@@ -321,6 +321,80 @@ public class L402ServerClientTests
     }
 
     [Fact]
+    public async Task VerifyTokenAsync_PassesResourceAndAmountSats_WhenSet()
+    {
+        var handler = new StubHttpHandler(StubHttpHandler.Json(
+            HttpStatusCode.OK,
+            """{"valid":true,"resource":"/api/weather","merchantId":42,"amountSats":100,"paymentHash":"abc"}"""));
+        using var client = MakeClient(handler);
+
+        await client.VerifyTokenAsync(new VerifyTokenRequest
+        {
+            Macaroon = "AgEL...",
+            Preimage = "deadbeef",
+            Resource = "/api/weather",
+            AmountSats = 100,
+        });
+
+        var sentBody = JsonDocument.Parse(handler.LastRequestBody!);
+        sentBody.RootElement.GetProperty("resource").GetString().Should().Be("/api/weather");
+        sentBody.RootElement.GetProperty("amountSats").GetInt64().Should().Be(100);
+    }
+
+    [Fact]
+    public async Task VerifyTokenAsync_OmitsResourceAndAmountSats_WhenNull()
+    {
+        var handler = new StubHttpHandler(StubHttpHandler.Json(
+            HttpStatusCode.OK,
+            """{"valid":true,"paymentHash":"abc"}"""));
+        using var client = MakeClient(handler);
+
+        await client.VerifyTokenAsync(new VerifyTokenRequest
+        {
+            Macaroon = "AgEL...",
+            Preimage = "deadbeef",
+        });
+
+        var sentBody = JsonDocument.Parse(handler.LastRequestBody!);
+        sentBody.RootElement.TryGetProperty("resource", out _).Should().BeFalse(
+            "resource=null should be omitted so the producer API skips path-caveat enforcement");
+        sentBody.RootElement.TryGetProperty("amountSats", out _).Should().BeFalse(
+            "amountSats=null should be omitted so the producer API skips amount-caveat enforcement");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task VerifyTokenAsync_EmptyResource_Throws(string resource)
+    {
+        // An empty-string Resource would silently disable path-caveat
+        // enforcement server-side; the producer API 400s it and so do we.
+        using var client = MakeClient(new StubHttpHandler(new HttpResponseMessage(HttpStatusCode.OK)));
+        Func<Task> act = () => client.VerifyTokenAsync(new VerifyTokenRequest
+        {
+            Macaroon = "x",
+            Preimage = "y",
+            Resource = resource,
+        });
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*Resource*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-10)]
+    public async Task VerifyTokenAsync_NonPositiveAmountSats_Throws(long amountSats)
+    {
+        using var client = MakeClient(new StubHttpHandler(new HttpResponseMessage(HttpStatusCode.OK)));
+        Func<Task> act = () => client.VerifyTokenAsync(new VerifyTokenRequest
+        {
+            Macaroon = "x",
+            Preimage = "y",
+            AmountSats = amountSats,
+        });
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*AmountSats*");
+    }
+
+    [Fact]
     public async Task VerifyTokenAsync_Returns401_ThrowsL402AuthException()
     {
         var handler = new StubHttpHandler(StubHttpHandler.Json(
