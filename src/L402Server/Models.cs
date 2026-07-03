@@ -128,6 +128,29 @@ public sealed record VerifyTokenRequest
     /// </summary>
     [JsonPropertyName("preimage")]
     public required string Preimage { get; init; }
+
+    /// <summary>
+    /// Optional: the request path being gated, compared against the
+    /// macaroon's <c>path</c> caveat <b>server-side</b>. When set, the
+    /// producer API returns <c>Valid = false</c> if the token was bound to a
+    /// different resource. When null, the path caveat is read out (see
+    /// <see cref="VerificationResult.Resource"/>) but NOT enforced — the
+    /// comparison is the integrator's responsibility. Must be non-empty
+    /// when set (the producer API rejects an empty string with 400).
+    /// </summary>
+    [JsonPropertyName("resource")]
+    public string? Resource { get; init; }
+
+    /// <summary>
+    /// Optional: the price (in satoshis) the gated endpoint requires,
+    /// compared against the macaroon's <c>amount_sats</c> caveat
+    /// <b>server-side</b>. When set, the producer API returns
+    /// <c>Valid = false</c> on a mismatch — prevents replaying a cheaper
+    /// token against a pricier endpoint. When null, the amount caveat is
+    /// read out but NOT enforced. Must be ≥ 1 when set.
+    /// </summary>
+    [JsonPropertyName("amountSats")]
+    public long? AmountSats { get; init; }
 }
 
 /// <summary>

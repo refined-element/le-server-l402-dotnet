@@ -199,6 +199,21 @@ public sealed class L402ServerClient : IDisposable
         {
             throw new ArgumentException("Preimage is required.", nameof(request));
         }
+        // Mirror the producer API's validation so callers get an immediate,
+        // descriptive error instead of a 400 round-trip. An empty-string
+        // Resource would otherwise silently disable path-caveat enforcement.
+        if (request.Resource is not null && string.IsNullOrWhiteSpace(request.Resource))
+        {
+            throw new ArgumentException(
+                "Resource must be non-empty when set; leave it null to skip path-caveat enforcement.",
+                nameof(request));
+        }
+        if (request.AmountSats is not null && request.AmountSats < 1)
+        {
+            throw new ArgumentException(
+                "AmountSats must be ≥ 1 when set; leave it null to skip amount-caveat enforcement.",
+                nameof(request));
+        }
 
         using var httpRequest = new HttpRequestMessage(
             HttpMethod.Post, $"{_baseUrl}/api/l402/challenges/verify")
