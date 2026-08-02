@@ -4,7 +4,16 @@
 
 
 [![NuGet](https://img.shields.io/nuget/v/L402Server.svg)](https://www.nuget.org/packages/L402Server)
+[![NuGet downloads](https://img.shields.io/nuget/dt/L402Server.svg)](https://www.nuget.org/packages/L402Server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Monetize your API — 30-day free trial
+
+AI agents pay your API per request over Bitcoin Lightning. Flat subscription, no take rate — you keep 100% of every sat.
+
+- **[Start a 30-day free trial](https://api.lightningenable.com/Checkout?plan=individual&utm_source=nuget&utm_medium=registry&utm_campaign=gtm-aug-2026)** — Individual plan, $0 today.
+- **[Activate with Lightning (Fast Lane)](https://docs.lightningenable.com/getting-started/activate-with-lightning?utm_source=nuget&utm_medium=registry&utm_campaign=gtm-aug-2026)** — pay 100 sats, get a 30-day Individual trial. No card.
+- **[Plans and pricing](https://lightningenable.com/pricing?utm_source=nuget&utm_medium=registry&utm_campaign=gtm-aug-2026)** — $99/mo Individual · $299/mo Business.
 
 **L402 server SDK for .NET.** Mint Lightning invoices and macaroons. Verify L402 tokens. Wrap any HTTP API with pay-per-request Lightning payments — one `dotnet add package`, two methods.
 

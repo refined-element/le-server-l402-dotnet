@@ -12,7 +12,7 @@
     <Version>0.2.0</Version>
     <Authors>Refined Element</Authors>
     <Company>Refined Element</Company>
-    <Description>L402 server SDK for .NET — mint Lightning invoices and macaroons, verify L402 tokens. Thin wrapper around Lightning Enable's hosted producer API.</Description>
+    <Description>L402 server SDK for .NET — mint Lightning invoices and macaroons, verify L402 tokens. Thin wrapper around Lightning Enable's hosted producer API (https://lightningenable.com).</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://docs.lightningenable.com/products/l402-microtransactions/native-integration</PackageProjectUrl>
     <RepositoryUrl>https://github.com/refined-element/le-server-l402-dotnet</RepositoryUrl>
