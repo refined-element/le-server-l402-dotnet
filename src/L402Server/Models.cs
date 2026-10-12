@@ -52,10 +52,19 @@ public sealed record CreateChallengeRequest
     public string? Description { get; init; }
 
     /// <summary>
-    /// Optional idempotency key. If the same key is sent twice within the
-    /// invoice's expiry window, the same challenge is returned (no duplicate
-    /// invoice). Defaults to none — the server falls back to client IP for
-    /// deduplication. Truncated to 256 chars server-side.
+    /// Optional idempotency key. If the same key is sent again while the
+    /// invoice it minted is still live, the same challenge is returned (no
+    /// duplicate invoice). At most 200 characters; a longer key is rejected
+    /// with a 400, and a null, empty, or whitespace-only key is not sent. A
+    /// live key reused for a different resource or price is rejected with a
+    /// 409 (<c>idempotency_key_reuse</c>).
+    /// <para>
+    /// Set one per buyer. Without a key, the server deduplicates by the
+    /// CALLER's IP address plus resource and price. The caller is the server
+    /// running this SDK, so every buyer of the same resource at the same
+    /// price receives the same invoice until it expires, and only one of
+    /// them can pay it.
+    /// </para>
     /// </summary>
     [JsonIgnore]
     public string? IdempotencyKey { get; init; }
